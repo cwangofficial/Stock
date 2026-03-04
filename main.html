@@ -138,6 +138,15 @@
             width: 3cm;
             max-width: 3cm;
         }
+        .control-input--readonly {
+            background: #eee;
+            color: #555;
+            min-width: 4.5em;
+            display: inline-block;
+        }
+        .control-input--digits {
+            min-width: 4.5em;
+        }
         button {
             padding: 8px 16px;
             cursor: pointer;
@@ -226,14 +235,17 @@
             font-weight: 700;
         }
         .col-index { width: 8%; text-align: center; font-weight: 700; }
-        .col-name { text-align: left; width: 52%; }
+        .col-name { text-align: left; width: 52%; min-width: 0; word-wrap: break-word; overflow-wrap: break-word; }
         .col-qty { width: 8%; }
         .col-price { width: 10%; text-align: center; }
         .col-total { width: 12%; }
         .col-check { width: 10%; }
 
         .input-field {
-            width: 90%;
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
             border: none;
             outline: none;
             font-size: 14px;
@@ -241,6 +253,7 @@
             background-color: transparent;
             text-align: center;
         }
+        .col-name .input-field { text-align: left; white-space: normal; word-break: break-word; font-size: 12px; }
         .input-field:focus { background: #fffde7; }
 
         .delete-btn {
@@ -308,6 +321,22 @@
         .footer-row td { text-align: right; padding-right: 20px; }
         .label-text { font-weight: 700; }
         .footer-value { font-weight: 400; text-align: center; }
+
+        /* 備註區 */
+        .order-notes {
+            margin-top: 16px;
+            padding: 12px 0 0 0;
+            border-top: 1px solid var(--border-color);
+            font-size: 12px;
+            line-height: 1.7;
+            color: #333;
+            text-align: left;
+        }
+        .order-notes .notes-title { font-weight: 700; margin-bottom: 8px; }
+        .order-notes ul { margin: 0; padding-left: 1.2em; }
+        .order-notes li { margin-bottom: 4px; }
+        .footer-value--total { font-weight: bold; }
+        .footer-value--digits { min-width: 4.5em; }
 
         /* 商品選擇區 */
         .product-selector {
@@ -866,6 +895,10 @@
                 width: 35%;
                 font-size: 10px;
             }
+            
+            .col-total {
+                width: 14%;
+            }
         }
 
         /* 觸控裝置優化 */
@@ -938,22 +971,22 @@
                     <div class="control-field">
                         <span class="control-label">運費</span>
                         <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
-                            <input type="number" class="control-input control-input--narrow" v-model.number="summary.shippingFee" placeholder="" style="margin: 0;">
-                            <button @click="summary.shippingFee = 45" style="background: #fff; color: #000; border: 1px solid #000; padding: 4px 12px; font-size: 12px;">45</button>
-                            <button @click="summary.shippingFee = 60" style="background: #fff; color: #000; border: 1px solid #000; padding: 4px 12px; font-size: 12px;">60</button>
+                            <input type="number" class="control-input control-input--narrow control-input--digits" v-model.number="summary.shippingFee" placeholder="—" style="margin: 0;">
+                            <button type="button" @click="summary.shippingFee = 45" style="background: #fff; color: #000; border: 1px solid #000; padding: 4px 12px; font-size: 12px;">45</button>
+                            <button type="button" @click="summary.shippingFee = 60" style="background: #fff; color: #000; border: 1px solid #000; padding: 4px 12px; font-size: 12px;">60</button>
                         </div>
                     </div>
                     <div class="control-field control-field--compact">
                         <span class="control-label">扣蝦幣</span>
-                        <input class="control-input control-input--narrow" v-model="summary.coinDisk" placeholder="">
+                        <input class="control-input control-input--narrow control-input--digits" v-model="summary.coinDisk" placeholder="—">
                     </div>
                     <div class="control-field control-field--compact">
                         <span class="control-label">賣場優惠券</span>
-                        <input class="control-input control-input--narrow" v-model="summary.coupon" placeholder="">
+                        <input class="control-input control-input--narrow control-input--digits" v-model="summary.coupon" placeholder="—">
                     </div>
                     <div class="control-field control-field--compact">
                         <span class="control-label">優惠券</span>
-                        <input class="control-input control-input--narrow" v-model="summary.promo" placeholder="">
+                        <input class="control-input control-input--narrow control-input--digits" v-model="summary.promo" placeholder="—">
                     </div>
                     <div class="control-field">
                         <span class="control-label">出貨系統</span>
@@ -1069,15 +1102,15 @@
             <tbody>
                 <tr v-for="(item, index) in items" :key="index">
                     <td class="col-index">{{ item.code || '' }}</td>
-                    <td class="col-name"><input class="input-field" v-model="item.name" style="text-align: left;"></td>
+                    <td class="col-name"><input class="input-field" v-model="item.name"></td>
                     <td><input type="number" class="input-field" v-model.number="item.qty"></td>
                     <td class="col-price">{{ item.price || '' }}</td>
                     <td>{{ item.qty * item.price }}</td>
-                    <td><input type="checkbox" :checked="item.name && item.name.trim() !== ''" :disabled="!item.name || item.name.trim() === ''"></td>
+                    <td><input type="checkbox" v-model="item.shipped" :disabled="!item.name || item.name.trim() === ''"></td>
                 </tr>
                 <tr class="footer-row">
                     <td colspan="4" class="label-text">運費：</td>
-                    <td class="footer-value">{{ summary.shippingFee }}</td>
+                    <td class="footer-value footer-value--digits">{{ summary.shippingFee }}</td>
                     <td></td>
                 </tr>
                 <tr class="footer-row">
@@ -1087,16 +1120,25 @@
                         <span v-if="summary.promo && summary.promo !== '0' && summary.promo !== '0元' && summary.promo !== ''">扣優惠券：{{ summary.promo }}</span>
                     </td>
                     <td colspan="2" class="label-text">帳單總計：</td>
-                    <td class="footer-value" style="font-weight: bold; color: red;"><input type="number" class="input-field" v-model.number="summary.billTotal" :placeholder="calculatedTotal" style="font-weight: bold; color: red; text-align: center;"></td>
+                    <td class="footer-value footer-value--total footer-value--digits" style="font-weight: bold; color: red;">{{ calculatedTotal }}</td>
                     <td></td>
                 </tr>
                 <tr class="footer-row">
                     <td colspan="4" class="label-text">總數量：</td>
-                    <td class="footer-value">{{ totalQty }}</td>
+                    <td class="footer-value footer-value--digits">{{ totalQty }}</td>
                     <td></td>
                 </tr>
             </tbody>
         </table>
+        <div class="order-notes">
+            <div class="notes-title">備註:</div>
+            <ul>
+                <li>開封請錄影留證，以保障雙方權益。</li>
+                <li>商品收到後請立即檢查，如需退貨請於時限內聯絡客服。</li>
+                <li>退貨時需"保留完整包裝及寄回發票"，否則可能拒絕退貨或收取費用。</li>
+                <li>貼身用品（如襪子等）基於衛生考量，一經拆封恕不退貨。</li>
+            </ul>
+        </div>
         </div>
 
         <div class="controls">
@@ -1246,11 +1288,11 @@
             const customer = ref({ id: '', phone: '', shipping: '蝦皮店到店', address: '', payment: '貨到付款' });
             const order = ref({ id: '', date: formatDate(new Date()), system: '蝦皮' });
             const items = ref([
-                { code: '', name: '', qty: 0, price: 0 },
-                { code: '', name: '', qty: 0, price: 0 },
-                { code: '', name: '', qty: 0, price: 0 },
-                { code: '', name: '', qty: 0, price: 0 },
-                { code: '', name: '', qty: 0, price: 0 }
+                { code: '', name: '', qty: 0, price: 0, shipped: false },
+                { code: '', name: '', qty: 0, price: 0, shipped: false },
+                { code: '', name: '', qty: 0, price: 0, shipped: false },
+                { code: '', name: '', qty: 0, price: 0, shipped: false },
+                { code: '', name: '', qty: 0, price: 0, shipped: false }
             ]);
             const summary = ref({ shippingFee: null, coinDisk: '', coupon: '', promo: '', billTotal: null });
             const addressMode = ref('same');
@@ -1262,8 +1304,6 @@
                     { code: '1B', name: '20支100%精梳棉T恤(經典男款/黑色)', 
                       prices: { S: 199, M: 199, L: 199, XL: 199, '2XL': 199, '3XL': 249, '4XL': 259, '5XL': 269 } },
                     { code: '1C', name: '20支100%精梳棉T恤(經典男款/綠色)', 
-                      prices: { S: 199, M: 199, L: 199, XL: 199, '2XL': 199, '3XL': 249, '4XL': 259, '5XL': 269 } },
-                    { code: '1D', name: '20支100%精梳棉T恤(經典男款/綠色)', 
                       prices: { S: 199, M: 199, L: 199, XL: 199, '2XL': 199, '3XL': 249, '4XL': 259, '5XL': 269 } },
                     { code: '1E', name: '20支100%精梳棉T恤(經典男款/莫蘭迪藍色)', 
                       prices: { S: 199, M: 199, L: 199, XL: 199, '2XL': 199, '3XL': 249, '4XL': 259, '5XL': 269 } },
@@ -1520,7 +1560,7 @@
             });
 
             const addItem = () => {
-                items.value.push({ code: '', name: '', qty: 0, price: 0 });
+                items.value.push({ code: '', name: '', qty: 0, price: 0, shipped: false });
             };
 
             const deleteItem = (index) => {
@@ -1542,7 +1582,8 @@
                         code: selectedProduct.value.code,
                         name: productName,
                         qty: selectedQty.value,
-                        price: productPrice
+                        price: productPrice,
+                        shipped: false
                     };
                 } else if (emptyIndex === -1 || emptyIndex >= 5) {
                     const firstFiveEmpty = items.value.slice(0, 5).findIndex(item => !item.name || item.name.trim() === '');
@@ -1551,14 +1592,16 @@
                             code: selectedProduct.value.code,
                             name: productName,
                             qty: selectedQty.value,
-                            price: productPrice
+                            price: productPrice,
+                            shipped: false
                         };
                     } else {
                         items.value.push({
                             code: selectedProduct.value.code,
                             name: productName,
                             qty: selectedQty.value,
-                            price: productPrice
+                            price: productPrice,
+                            shipped: false
                         });
                     }
                 }
@@ -1592,9 +1635,27 @@
                 return items.value.reduce((sum, item) => sum + (item.qty || 0), 0);
             });
 
+            const getDefaultItems = () => [
+                { code: '', name: '', qty: 0, price: 0, shipped: false },
+                { code: '', name: '', qty: 0, price: 0, shipped: false },
+                { code: '', name: '', qty: 0, price: 0, shipped: false },
+                { code: '', name: '', qty: 0, price: 0, shipped: false },
+                { code: '', name: '', qty: 0, price: 0, shipped: false }
+            ];
             const resetData = () => {
-                if(confirm('確定要清空所有資料嗎？')) {
-                    items.value = [{ name: '', qty: 0, price: 0, note: '' }];
+                if (confirm('確定要清空所有資料嗎？')) {
+                    items.value = getDefaultItems();
+                    customer.value = { id: '', phone: '', shipping: '蝦皮店到店', address: '', payment: '貨到付款' };
+                    order.value = { id: '', date: formatDate(new Date()), system: '蝦皮' };
+                    summary.value = { shippingFee: null, coinDisk: '', coupon: '', promo: '', billTotal: null };
+                    addressMode.value = 'same';
+                    selectedMainCategory.value = '';
+                    selectedStyle.value = '';
+                    selectedProduct.value = null;
+                    selectedSize.value = '';
+                    selectedQty.value = 0;
+                    showNumpad.value = false;
+                    numpadValue.value = '';
                 }
             };
 
