@@ -1133,10 +1133,11 @@
         <div class="order-notes">
             <div class="notes-title">備註:</div>
             <ul>
-                <li>開封請錄影留證，以保障雙方權益。</li>
-                <li>商品收到後請立即檢查，如需退貨請於時限內聯絡客服。</li>
-                <li>退貨時需"保留完整包裝及寄回發票"，否則可能拒絕退貨或收取費用。</li>
-                <li>貼身用品（如襪子等）基於衛生考量，一經拆封恕不退貨。</li>
+                <li>商品開封時，請錄影存證，以確保雙方權益。</li>
+                <li>商品收到後請立即檢查，如需退貨請於７天內聯絡客服。</li>
+                <li>退貨時需「保留完整包裝，出貨單及發票」並於期限內一並寄回以完成退貨程序。</li>
+                <li>若商品退貨內容不齊全或商品無法再售，賣場有權拒絕客戶退貨。</li>
+                <li>貼身用品（如襪子、內著等）基於衛生考量，一經拆封恕不退貨。</li>
             </ul>
         </div>
         </div>
@@ -1150,7 +1151,7 @@
                 <div class="product-selector-title">商品選擇區</div>
                 
                 <div class="product-step">
-                    <div class="product-step-label">步驟 1: 選擇類別</div>
+                    <div class="product-step-label">選擇類別</div>
                     <div class="product-grid">
                         <div class="product-option" 
                              :class="{ active: selectedMainCategory === 'male' }"
@@ -1181,7 +1182,7 @@
                 </div>
 
                 <div class="product-step" v-if="selectedMainCategory">
-                    <div class="product-step-label">步驟 2: 選擇款式</div>
+                    <div class="product-step-label">選擇款式</div>
                     <div class="product-grid">
                         <div class="product-option"
                              v-for="style in availableStyles"
@@ -1194,7 +1195,7 @@
                 </div>
 
                 <div class="product-step" v-if="selectedStyle">
-                    <div class="product-step-label">步驟 3: 選擇商品</div>
+                    <div class="product-step-label">選擇商品</div>
                     <div class="product-detail-item"
                          v-for="product in availableProducts"
                          :key="product.code"
@@ -1205,7 +1206,7 @@
                 </div>
 
                 <div class="product-step" v-if="selectedProduct">
-                    <div class="product-step-label">步驟 4: 選擇尺寸</div>
+                    <div class="product-step-label">選擇尺寸</div>
                     <div class="size-grid">
                         <div class="size-option"
                              v-for="size in availableSizes"
@@ -1218,7 +1219,7 @@
                 </div>
 
                 <div class="product-step" v-if="selectedSize">
-                    <div class="product-step-label">步驟 5: 選擇數量</div>
+                    <div class="product-step-label">選擇數量</div>
                     <div class="qty-button-grid">
                         <button class="qty-btn" 
                                 :class="{ active: selectedQty === 1 }"
