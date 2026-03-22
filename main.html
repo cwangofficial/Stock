@@ -329,12 +329,14 @@
             border-top: 1px solid var(--border-color);
             font-size: 12px;
             line-height: 1.7;
-            color: #333;
+            color: #000;
+            font-weight: bold;
             text-align: left;
         }
         .order-notes .notes-title { font-weight: 700; margin-bottom: 8px; }
         .order-notes ul { margin: 0; padding-left: 1.2em; }
-        .order-notes li { margin-bottom: 4px; }
+        .order-notes li { margin-bottom: 4px; font-weight: bold; }
+        .order-notes .notes-highlight { color: red; font-weight: bold; }
         .footer-value--total { font-weight: bold; }
         .footer-value--digits { min-width: 4.5em; }
 
@@ -1135,7 +1137,7 @@
             <ul>
                 <li>商品開封時，請錄影存證，以確保雙方權益。</li>
                 <li>商品收到後請立即檢查，如需退貨請於７天內聯絡客服。</li>
-                <li>退貨時需「保留完整包裝，出貨單及發票」並於期限內一並寄回以完成退貨程序。</li>
+                <li>退貨時需「<span class="notes-highlight">保留完整包裝，出貨單及發票</span>」並於期限內一並寄回以完成退貨程序。</li>
                 <li>若商品退貨內容不齊全或商品無法再售，賣場有權拒絕客戶退貨。</li>
                 <li>貼身用品（如襪子、內著等）基於衛生考量，一經拆封恕不退貨。</li>
             </ul>
@@ -1151,50 +1153,32 @@
                 <div class="product-selector-title">商品選擇區</div>
                 
                 <div class="product-step">
-                    <div class="product-step-label">選擇類別</div>
-                    <div class="product-grid">
-                        <div class="product-option" 
-                             :class="{ active: selectedMainCategory === 'male' }"
-                             @click="selectMainCategory('male')">
-                            男款
-                        </div>
-                        <div class="product-option" 
-                             :class="{ active: selectedMainCategory === 'female' }"
-                             @click="selectMainCategory('female')">
-                            女款
-                        </div>
-                        <div class="product-option" 
-                             :class="{ active: selectedMainCategory === 'kids' }"
-                             @click="selectMainCategory('kids')">
-                            小童款
-                        </div>
-                        <div class="product-option" 
-                             :class="{ active: selectedMainCategory === 'autumn_winter' }"
-                             @click="selectMainCategory('autumn_winter')">
-                            秋冬款
-                        </div>
-                        <div class="product-option" 
-                             :class="{ active: selectedMainCategory === 'socks' }"
-                             @click="selectMainCategory('socks')">
-                            襪款
-                        </div>
-                    </div>
-                </div>
-
-                <div class="product-step" v-if="selectedMainCategory">
                     <div class="product-step-label">選擇款式</div>
                     <div class="product-grid">
                         <div class="product-option"
-                             v-for="style in availableStyles"
-                             :key="style.key"
-                             :class="{ active: selectedStyle === style.key }"
-                             @click="selectStyle(style.key)">
-                            {{ style.label }}
+                             v-for="label in availableStyleLabels"
+                             :key="label"
+                             :class="{ active: selectedStyleLabel === label }"
+                             @click="selectStyleLabel(label)">
+                            {{ label }}
                         </div>
                     </div>
                 </div>
 
-                <div class="product-step" v-if="selectedStyle">
+                <div class="product-step" v-if="selectedStyleLabel">
+                    <div class="product-step-label">選擇類別</div>
+                    <div class="product-grid">
+                        <div class="product-option"
+                             v-for="cat in availableCategoriesForStyle"
+                             :key="cat.key"
+                             :class="{ active: selectedMainCategory === cat.key }"
+                             @click="selectMainCategory(cat.key)">
+                            {{ cat.label }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="product-step" v-if="resolvedStyleKey && resolvedStyleKey !== 'classic_socks' && resolvedStyleKey !== 'sport_socks'">
                     <div class="product-step-label">選擇商品</div>
                     <div class="product-detail-item"
                          v-for="product in availableProducts"
@@ -1205,7 +1189,7 @@
                     </div>
                 </div>
 
-                <div class="product-step" v-if="selectedProduct">
+                <div class="product-step" v-if="selectedProduct || resolvedStyleKey === 'classic_socks' || resolvedStyleKey === 'sport_socks'">
                     <div class="product-step-label">選擇尺寸</div>
                     <div class="size-grid">
                         <div class="size-option"
@@ -1375,8 +1359,8 @@
                 ]
             });
 
+            const selectedStyleLabel = ref('');
             const selectedMainCategory = ref('');
-            const selectedStyle = ref('');
             const selectedProduct = ref(null);
             const selectedSize = ref('');
             const selectedQty = ref(0);
@@ -1405,9 +1389,26 @@
                 ],
                 socks: [
                     { key: 'classic_socks', label: '經典款' },
-                    { key: 'sport_socks', label: '運動款' }
+                    { key: 'sport_socks', label: '襪款' }
                 ]
             };
+            const categoryLabels = { male: '男款', female: '女款', kids: '小童款', autumn_winter: '秋冬款', socks: '襪款' };
+            const styleLabelToCategories = {};
+            const labelCategoryToStyleKey = {};
+            (() => {
+                const labelOrder = ['經典款', '襪款', '重磅款', 'LOGO款', '鋼印款', /* '多巴胺款', */ /* '大尺碼', */ '大學T', '帽T'];
+                for (const label of labelOrder) {
+                    for (const [cat, styles] of Object.entries(styleMapping)) {
+                        if (label === '經典款' && cat === 'socks') continue;
+                        const s = styles.find(x => x.label === label);
+                        if (s) {
+                            if (!styleLabelToCategories[label]) styleLabelToCategories[label] = [];
+                            if (!styleLabelToCategories[label].includes(cat)) styleLabelToCategories[label].push(cat);
+                            labelCategoryToStyleKey[label + '|' + cat] = s.key;
+                        }
+                    }
+                }
+            })();
 
             const productMapping = {
                 classic_male: 'classic_male',
@@ -1425,29 +1426,55 @@
                 sport_socks: []
             };
 
-            const availableStyles = computed(() => {
-                if (!selectedMainCategory.value) return [];
-                return styleMapping[selectedMainCategory.value] || [];
+            const availableStyleLabels = computed(() => {
+                return ['經典款', '襪款', '重磅款', 'LOGO款', '鋼印款', /* '多巴胺款', */ /* '大尺碼', */ '大學T', '帽T'];
+            });
+            const availableCategoriesForStyle = computed(() => {
+                if (!selectedStyleLabel.value) return [];
+                if (selectedStyleLabel.value === '襪款') {
+                    return [{ key: 'classic_socks', label: '經典款' }, { key: 'sport_socks', label: '運動款' }];
+                }
+                if (selectedStyleLabel.value === 'LOGO款') {
+                    return [{ key: 'logo_white', label: '白印' }, { key: 'logo_black', label: '黑印' }];
+                }
+                const cats = styleLabelToCategories[selectedStyleLabel.value] || [];
+                return cats.map(c => ({ key: c, label: categoryLabels[c] }));
+            });
+            const resolvedStyleKey = computed(() => {
+                if (!selectedStyleLabel.value) return '';
+                if (selectedStyleLabel.value === 'LOGO款') return selectedMainCategory.value || '';
+                if (selectedStyleLabel.value === '襪款') return selectedMainCategory.value || '';
+                if (!selectedMainCategory.value) return '';
+                return labelCategoryToStyleKey[selectedStyleLabel.value + '|' + selectedMainCategory.value] || '';
             });
 
             const availableProducts = computed(() => {
-                if (!selectedStyle.value) return [];
-                const categoryKey = productMapping[selectedStyle.value];
+                const styleKey = resolvedStyleKey.value;
+                if (!styleKey) return [];
+                if (styleKey === 'logo_white') {
+                    const all = [...(products.value.classic_logo || []), ...(products.value.dopamine || [])];
+                    return all.filter(p => ['4A', '5A', '5B', '5C'].includes(p.code));
+                }
+                if (styleKey === 'logo_black') {
+                    const all = [...(products.value.classic_logo || []), ...(products.value.dopamine || [])];
+                    return all.filter(p => ['4B', '6A', '6B', '6C'].includes(p.code));
+                }
+                const categoryKey = productMapping[styleKey];
                 if (!categoryKey || !products.value[categoryKey]) return [];
                 
                 let filteredProducts = products.value[categoryKey];
                 
-                if (selectedStyle.value === 'heavyweight_male') {
+                if (styleKey === 'heavyweight_male') {
                     filteredProducts = filteredProducts.filter(p => p.code.startsWith('7'));
-                } else if (selectedStyle.value === 'heavyweight_female') {
+                } else if (styleKey === 'heavyweight_female') {
                     filteredProducts = filteredProducts.filter(p => p.code.startsWith('8'));
-                } else if (selectedStyle.value === 'steel_print') {
+                } else if (styleKey === 'steel_print') {
                     filteredProducts = filteredProducts.filter(p => p.code.startsWith('12'));
-                } else if (selectedStyle.value === 'big_size') {
+                } else if (styleKey === 'big_size') {
                     filteredProducts = filteredProducts.filter(p => p.code.startsWith('11'));
-                } else if (selectedStyle.value === 'college_tee') {
+                } else if (styleKey === 'college_tee') {
                     filteredProducts = filteredProducts.filter(p => p.code.startsWith('9'));
-                } else if (selectedStyle.value === 'hoodie') {
+                } else if (styleKey === 'hoodie') {
                     filteredProducts = filteredProducts.filter(p => p.code.startsWith('10'));
                 }
                 
@@ -1459,17 +1486,24 @@
                 return Object.keys(selectedProduct.value.prices);
             });
 
-            const selectMainCategory = (category) => {
-                selectedMainCategory.value = category;
-                selectedStyle.value = '';
+            const selectStyleLabel = (label) => {
+                selectedStyleLabel.value = label;
+                selectedMainCategory.value = '';
                 selectedProduct.value = null;
                 selectedSize.value = '';
                 selectedQty.value = 0;
             };
-
-            const selectStyle = (style) => {
-                selectedStyle.value = style;
-                selectedProduct.value = null;
+            const sockPlaceholders = {
+                classic_socks: { name: '襪子(經典款)', code: 'CS', prices: { '均碼': 100 } },
+                sport_socks: { name: '襪子(運動款)', code: 'SS', prices: { '均碼': 100 } }
+            };
+            const selectMainCategory = (category) => {
+                selectedMainCategory.value = category;
+                if (category === 'classic_socks' || category === 'sport_socks') {
+                    selectedProduct.value = sockPlaceholders[category];
+                } else {
+                    selectedProduct.value = null;
+                }
                 selectedSize.value = '';
                 selectedQty.value = 0;
             };
@@ -1501,8 +1535,8 @@
             };
 
             const resetProductSelection = () => {
+                selectedStyleLabel.value = '';
                 selectedMainCategory.value = '';
-                selectedStyle.value = '';
                 selectedProduct.value = null;
                 selectedSize.value = '';
                 selectedQty.value = 0;
@@ -1650,8 +1684,8 @@
                     order.value = { id: '', date: formatDate(new Date()), system: '蝦皮' };
                     summary.value = { shippingFee: null, coinDisk: '', coupon: '', promo: '', billTotal: null };
                     addressMode.value = 'same';
+                    selectedStyleLabel.value = '';
                     selectedMainCategory.value = '';
-                    selectedStyle.value = '';
                     selectedProduct.value = null;
                     selectedSize.value = '';
                     selectedQty.value = 0;
@@ -1697,10 +1731,10 @@
 
             return { 
                 customer, order, items, summary, products, 
-                selectedMainCategory, selectedStyle, selectedProduct, selectedSize, selectedQty, 
-                availableStyles, availableProducts, availableSizes,
+                selectedStyleLabel, selectedMainCategory, selectedProduct, selectedSize, selectedQty, 
+                availableStyleLabels, availableCategoriesForStyle, resolvedStyleKey, availableProducts, availableSizes,
                 showNumpad, numpadValue,
-                addItem, deleteItem, addProductToOrder, selectMainCategory, selectStyle, selectProduct, resetProductSelection,
+                addItem, deleteItem, addProductToOrder, selectStyleLabel, selectMainCategory, selectProduct, resetProductSelection,
                 openNumpad, closeNumpad, numpadInput, numpadBackspace, numpadClear, confirmNumpad,
                 totalAmount, totalQty, resetData, prevDate, nextDate, 
                 addressMode, addressDisplay, convenienceStoreDisplay, handlePrint, showInventory, backToMain,
